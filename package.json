@@ -1,6 +1,6 @@
 {
   "name": "calculadora-imss",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Calculadora de cuotas obrero-patronales del IMSS (Instituto Mexicano del Seguro Social) con tarifas 2024",
   "main": "dist/index.js",
