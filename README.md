@@ -6,6 +6,7 @@
 <!-- BADGES-DONATIONS-END -->
 
 [![npm version](https://badge.fury.io/js/calculadora-imss.svg)](https://badge.fury.io/js/calculadora-imss)
+[![npm downloads](https://img.shields.io/npm/dm/calculadora-imss.svg)](https://www.npmjs.com/package/calculadora-imss)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js CI](https://github.com/GerardoLucero/calculadora-imss/workflows/Publish%20to%20NPM/badge.svg)](https://github.com/GerardoLucero/calculadora-imss/actions)
 
