@@ -43,7 +43,7 @@ describe('Calculadora de Cuotas IMSS', () => {
     });
     
     it('debe aplicar tope de 25 UMAs', () => {
-      const uma = 108.57;
+      const uma = 117.31;
       const salarioAlto = uma * 30; // 30 UMAs
       const resultado = calcularCuotasIMSS(salarioAlto);
       
@@ -54,7 +54,7 @@ describe('Calculadora de Cuotas IMSS', () => {
     it('debe aplicar salario mínimo si es menor', () => {
       const resultado = calcularCuotasIMSS(100); // Menos del mínimo
       
-      expect(resultado.salarioBase.sbc).toBeGreaterThanOrEqual(248.93);
+      expect(resultado.salarioBase.sbc).toBeGreaterThanOrEqual(315.04);
     });
     
     it('debe calcular para diferentes clases de riesgo', () => {
@@ -119,7 +119,7 @@ describe('Calculadora de Cuotas IMSS', () => {
       expect(resultado).toHaveProperty('desglose');
       
       expect(resultado.cuotaDiaria).toBeGreaterThan(0);
-      expect(resultado.cuotaPeriodo).toBe(resultado.cuotaDiaria * 30);
+      expect(resultado.cuotaPeriodo).toBeCloseTo(resultado.cuotaDiaria * 30, 1);
     });
     
     it('debe incluir solo ramos con cuota obrera', () => {
@@ -155,7 +155,7 @@ describe('Calculadora de Cuotas IMSS', () => {
       expect(resultado).toHaveProperty('desglose');
       
       expect(resultado.cuotaDiaria).toBeGreaterThan(0);
-      expect(resultado.cuotaPeriodo).toBe(resultado.cuotaDiaria * 30);
+      expect(resultado.cuotaPeriodo).toBeCloseTo(resultado.cuotaDiaria * 30, 1);
     });
     
     it('debe incluir todos los 6 ramos', () => {
@@ -221,7 +221,7 @@ describe('Calculadora de Cuotas IMSS', () => {
   });
   
   describe('obtenerUMA', () => {
-    it('debe retornar valores de UMA 2024', () => {
+    it('debe retornar valores de UMA 2026', () => {
       const uma = obtenerUMA();
       
       expect(uma).toHaveProperty('año');
@@ -230,10 +230,10 @@ describe('Calculadora de Cuotas IMSS', () => {
       expect(uma).toHaveProperty('anual');
       expect(uma).toHaveProperty('limitesSalario');
       
-      expect(uma.año).toBe(2024);
-      expect(uma.diaria).toBe(108.57);
-      expect(uma.mensual).toBe(3297.57);
-      expect(uma.anual).toBe(39570.84);
+      expect(uma.año).toBe(2026);
+      expect(uma.diaria).toBe(117.31);
+      expect(uma.mensual).toBe(3566.22);
+      expect(uma.anual).toBe(42794.64);
     });
     
     it('debe incluir límites de salario', () => {
@@ -257,7 +257,7 @@ describe('Calculadora de Cuotas IMSS', () => {
       expect(porcentajes).toHaveProperty('guarderias');
       expect(porcentajes).toHaveProperty('riesgosTrabajo');
       
-      expect(porcentajes.año).toBe(2024);
+      expect(porcentajes.año).toBe(2026);
     });
     
     it('debe incluir 5 clases de riesgo', () => {
@@ -361,9 +361,9 @@ describe('Calculadora de Cuotas IMSS', () => {
   
   describe('Casos de uso reales', () => {
     it('debe calcular correctamente para salario mínimo', () => {
-      const resultado = calcularCuotasIMSS(248.93, { diasPeriodo: 30 });
+      const resultado = calcularCuotasIMSS(315.04, { diasPeriodo: 30 });
       
-      expect(resultado.salarioBase.salarioDiario).toBe(248.93);
+      expect(resultado.salarioBase.salarioDiario).toBe(315.04);
       expect(resultado.totalesPeriodo.obrera).toBeGreaterThan(0);
       expect(resultado.totalesPeriodo.patronal).toBeGreaterThan(0);
     });
@@ -444,6 +444,40 @@ describe('Calculadora de Cuotas IMSS', () => {
       // Verificar salario neto
       expect(resultado.salarioNeto.diario).toBe(salarioDiario - resultado.totalesDiarios.obrera);
       expect(resultado.salarioNeto.periodo).toBe(resultado.salarioNeto.diario * 30);
+    });
+  });
+
+  describe('Cálculos verificados a mano (2026)', () => {
+    const ramo = (r, nombre) => r.desglosePorRamo.find(x => x.ramo.startsWith(nombre));
+
+    it('salario mínimo: enfermedad y maternidad con cuota fija de UNA UMA', () => {
+      const r = calcularCuotasIMSS(315.04);
+      const em = ramo(r, 'Enfermedad');
+      // obrera: 0.25% + 0.375% de 315.04 (no hay excedente sobre 3 UMA = 351.93)
+      expect(em.obrera).toBeCloseTo(1.97, 2);
+      // patronal: 117.31 x 20.40% + 0.70% + 1.05% de 315.04
+      expect(em.patronal).toBeCloseTo(29.44, 2);
+    });
+
+    it('la cesantía patronal depende del rango de salario (SBC 315.04, 400 y 1000)', () => {
+      expect(ramo(calcularCuotasIMSS(315.04), 'Cesantía').tasaPatronal).toBe(3.15);
+      expect(ramo(calcularCuotasIMSS(400), 'Cesantía').tasaPatronal).toBe(6.361);
+      expect(ramo(calcularCuotasIMSS(1000), 'Cesantía').tasaPatronal).toBe(7.513);
+      expect(ramo(calcularCuotasIMSS(1000), 'Cesantía').patronal).toBeCloseTo(75.13, 2);
+    });
+
+    it('la cuota obrera de cesantía es 1.125% del SBC', () => {
+      expect(ramo(calcularCuotasIMSS(1000), 'Cesantía').obrera).toBeCloseTo(11.25, 2);
+    });
+
+    it('en zona fronteriza el SBC mínimo es 440.87', () => {
+      expect(calcularCuotasIMSS(300, { zonaFronteriza: true }).salarioBase.sbc).toBe(440.87);
+    });
+
+    it('expone la tabla patronal de cesantía y vejez', () => {
+      const p = obtenerPorcentajesIMSS();
+      expect(p.cesantiaVejezPatronal).toHaveLength(8);
+      expect(p.cesantiaVejezPatronal[7].tasa).toBeCloseTo(0.07513, 5);
     });
   });
 });

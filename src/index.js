@@ -1,43 +1,46 @@
 /**
- * Calculadora de Cuotas IMSS 2024
+ * Calculadora de Cuotas IMSS 2026
  * Calcula cuotas obrero-patronales del Instituto Mexicano del Seguro Social
- * Basado en la Ley del Seguro Social y UMA 2024
+ * Basado en la Ley del Seguro Social (arts. 25, 106, 107, 147, 168 y Segundo transitorio
+ * del decreto DOF 16-12-2020), UMA 2026 y salarios mínimos 2026.
  * 
  * @author Gerardo Lucero
- * @version 1.0.0
+ * @version 2.0.0
  */
 
-// UMA 2024 (Unidad de Medida y Actualización)
-const UMA_2024 = {
-  diaria: 108.57,
-  mensual: 3297.57,
-  anual: 39570.84
+// UMA 2026 (INEGI, DOF 09-ene-2026; vigente del 1 de febrero de 2026 al 31 de enero de 2027).
+// Enero de 2026 todavia se rige por la UMA 2025 (diaria 113.14).
+const UMA_2026 = {
+  diaria: 117.31,
+  mensual: 3566.22,
+  anual: 42794.64
 };
 
-// Límites de salario
-const SALARIO_MINIMO_2024 = 248.93; // Diario
-const LIMITE_SUPERIOR_COTIZACION = UMA_2024.diaria * 25; // 25 UMAs
+// Salario mínimo diario 2026 (CONASAMI, vigente desde el 1 de enero de 2026)
+const SALARIO_MINIMO_2026 = { general: 315.04, zonaLibreFronteraNorte: 440.87 };
+const LIMITE_SUPERIOR_COTIZACION = UMA_2026.diaria * 25; // 25 UMAs
 
-// Porcentajes de cuotas por ramo (2024)
+// Porcentajes de cuotas por ramo
 const PORCENTAJES_IMSS = {
-  // Enfermedad y Maternidad
+  // Enfermedad y Maternidad (arts. 25, 106 y 107 LSS)
   enfermedadMaternidad: {
     obrera: {
-      excedente: 0.40 / 100, // 0.40% sobre excedente de 3 UMAs
-      dinero: 0.375 / 100 // 0.375% prestaciones en dinero
+      excedente: 0.40 / 100, // 0.40% sobre el excedente de 3 UMAs (art. 106 II)
+      dinero: 0.25 / 100,    // 0.25% prestaciones en dinero (art. 107)
+      pensionados: 0.375 / 100 // 0.375% gastos médicos de pensionados (art. 25)
     },
     patronal: {
-      cuotaFija: 20.40 / 100, // 20.40% sobre 3 UMAs
-      excedente: 1.10 / 100, // 1.10% sobre excedente de 3 UMAs
-      dinero: 0.70 / 100, // 0.70% prestaciones en dinero
-      pensionados: 1.05 / 100 // 1.05% gastos médicos pensionados
+      cuotaFija: 20.40 / 100, // 20.40% de UNA UMA diaria por trabajador (art. 106 I)
+      excedente: 1.10 / 100,  // 1.10% sobre el excedente de 3 UMAs (art. 106 II)
+      dinero: 0.70 / 100,     // 0.70% prestaciones en dinero (art. 107)
+      pensionados: 1.05 / 100 // 1.05% gastos médicos de pensionados (art. 25)
     }
   },
   
-  // Invalidez y Vida
+  // Invalidez y Vida (art. 147)
   invalidezVida: {
-    obrera: 0.625 / 100, // 0.625%
-    patronal: 1.75 / 100 // 1.75%
+    obrera: 0.625 / 100,
+    patronal: 1.75 / 100
   },
   
   // Retiro, Cesantía y Vejez
@@ -45,8 +48,8 @@ const PORCENTAJES_IMSS = {
     patronal: 2.00 / 100 // 2% solo patronal
   },
   cesantiaVejez: {
-    obrera: 1.125 / 100, // 1.125%
-    patronal: 3.150 / 100 // 3.150%
+    obrera: 1.125 / 100 // 1.125% (art. 168 II b)
+    // La cuota patronal depende del salario base de cotización: ver CESANTIA_VEJEZ_PATRONAL_2026
   },
   
   // Guarderías y Prestaciones Sociales
@@ -54,7 +57,7 @@ const PORCENTAJES_IMSS = {
     patronal: 1.00 / 100 // 1% solo patronal
   },
   
-  // Riesgos de Trabajo (varía por clase)
+  // Riesgos de Trabajo (prima media por clase; la real depende de la siniestralidad de cada patrón)
   riesgosTrabajo: {
     claseI: 0.54355 / 100,    // Mínima
     claseII: 1.13065 / 100,   // Baja
@@ -64,18 +67,43 @@ const PORCENTAJES_IMSS = {
   }
 };
 
+// Cuota patronal de Cesantía en edad avanzada y Vejez aplicable en 2026.
+// La reforma de pensiones (DOF 16-12-2020, art. 168 II a y Segundo transitorio) la sube cada año
+// de 2023 a 2030 hasta la tabla final del art. 168 (3.150% a 11.875%). Los topes son multiplos de la UMA
+// diaria, salvo el primer renglon (1.00 SM).
+const CESANTIA_VEJEZ_PATRONAL_2026 = [
+  { descripcion: '1.00 SM',              hastaUMA: null, tasa: 3.150 / 100 },
+  { descripcion: '1.01 SM a 1.50 UMA',   hastaUMA: 1.5,  tasa: 3.676 / 100 },
+  { descripcion: '1.51 a 2.00 UMA',      hastaUMA: 2.0,  tasa: 4.851 / 100 },
+  { descripcion: '2.01 a 2.50 UMA',      hastaUMA: 2.5,  tasa: 5.556 / 100 },
+  { descripcion: '2.51 a 3.00 UMA',      hastaUMA: 3.0,  tasa: 6.026 / 100 },
+  { descripcion: '3.01 a 3.50 UMA',      hastaUMA: 3.5,  tasa: 6.361 / 100 },
+  { descripcion: '3.51 a 4.00 UMA',      hastaUMA: 4.0,  tasa: 6.613 / 100 },
+  { descripcion: '4.01 UMA en adelante', hastaUMA: Infinity, tasa: 7.513 / 100 }
+];
+
+/**
+ * Tasa patronal de cesantía y vejez para un salario base de cotización.
+ * Con un SBC igual al salario mínimo aplica el primer renglon; arriba de eso se ubica por multiplos de UMA.
+ */
+function tasaCesantiaPatronal(sbc, salarioMinimo) {
+  if (sbc <= salarioMinimo) return CESANTIA_VEJEZ_PATRONAL_2026[0];
+  const veces = sbc / UMA_2026.diaria;
+  return CESANTIA_VEJEZ_PATRONAL_2026.slice(1).find(r => veces <= r.hastaUMA);
+}
+
 /**
  * Calcula el salario base de cotización
  * @param {number} salarioDiario - Salario diario del trabajador
  * @returns {Object} Salario base y topes
  */
-function calcularSalarioBase(salarioDiario) {
+function calcularSalarioBase(salarioDiario, zonaFronteriza = false) {
   // El SBC no puede ser menor al salario mínimo ni mayor a 25 UMAs
-  const sbcMinimo = SALARIO_MINIMO_2024;
+  const sbcMinimo = zonaFronteriza ? SALARIO_MINIMO_2026.zonaLibreFronteraNorte : SALARIO_MINIMO_2026.general;
   const sbcMaximo = LIMITE_SUPERIOR_COTIZACION;
   
   const sbc = Math.max(sbcMinimo, Math.min(salarioDiario, sbcMaximo));
-  const treUMAs = UMA_2024.diaria * 3;
+  const treUMAs = UMA_2026.diaria * 3;
   const excedente = Math.max(0, sbc - treUMAs);
   
   return {
@@ -95,18 +123,20 @@ function calcularSalarioBase(salarioDiario) {
  * @returns {Object} Desglose de cuotas
  */
 function calcularEnfermedadMaternidad(salarioBase) {
-  const { sbc, treUMAs, excedente } = salarioBase;
+  const { sbc, excedente } = salarioBase;
+  const p = PORCENTAJES_IMSS.enfermedadMaternidad;
   
   // Cuota Obrera
-  const obreraExcedente = excedente * PORCENTAJES_IMSS.enfermedadMaternidad.obrera.excedente;
-  const obreraDinero = sbc * PORCENTAJES_IMSS.enfermedadMaternidad.obrera.dinero;
-  const cuotaObrera = obreraExcedente + obreraDinero;
+  const obreraExcedente = excedente * p.obrera.excedente;
+  const obreraDinero = sbc * p.obrera.dinero;
+  const obreraPensionados = sbc * p.obrera.pensionados;
+  const cuotaObrera = obreraExcedente + obreraDinero + obreraPensionados;
   
-  // Cuota Patronal
-  const patronalCuotaFija = treUMAs * PORCENTAJES_IMSS.enfermedadMaternidad.patronal.cuotaFija;
-  const patronalExcedente = excedente * PORCENTAJES_IMSS.enfermedadMaternidad.patronal.excedente;
-  const patronalDinero = sbc * PORCENTAJES_IMSS.enfermedadMaternidad.patronal.dinero;
-  const patronalPensionados = sbc * PORCENTAJES_IMSS.enfermedadMaternidad.patronal.pensionados;
+  // Cuota Patronal: la cuota fija es un porcentaje de UNA UMA, no del salario
+  const patronalCuotaFija = UMA_2026.diaria * p.patronal.cuotaFija;
+  const patronalExcedente = excedente * p.patronal.excedente;
+  const patronalDinero = sbc * p.patronal.dinero;
+  const patronalPensionados = sbc * p.patronal.pensionados;
   const cuotaPatronal = patronalCuotaFija + patronalExcedente + patronalDinero + patronalPensionados;
   
   return {
@@ -117,7 +147,8 @@ function calcularEnfermedadMaternidad(salarioBase) {
     desglose: {
       obrera: {
         excedente: parseFloat(obreraExcedente.toFixed(2)),
-        dinero: parseFloat(obreraDinero.toFixed(2))
+        dinero: parseFloat(obreraDinero.toFixed(2)),
+        pensionados: parseFloat(obreraPensionados.toFixed(2))
       },
       patronal: {
         cuotaFija: parseFloat(patronalCuotaFija.toFixed(2)),
@@ -172,16 +203,19 @@ function calcularRetiro(salarioBase) {
  * @returns {Object} Desglose de cuotas
  */
 function calcularCesantiaVejez(salarioBase) {
-  const { sbc } = salarioBase;
+  const { sbc, sbcMinimo } = salarioBase;
   
+  const renglon = tasaCesantiaPatronal(sbc, sbcMinimo);
   const cuotaObrera = sbc * PORCENTAJES_IMSS.cesantiaVejez.obrera;
-  const cuotaPatronal = sbc * PORCENTAJES_IMSS.cesantiaVejez.patronal;
+  const cuotaPatronal = sbc * renglon.tasa;
   
   return {
     ramo: 'Cesantía en Edad Avanzada y Vejez',
     obrera: parseFloat(cuotaObrera.toFixed(2)),
     patronal: parseFloat(cuotaPatronal.toFixed(2)),
-    total: parseFloat((cuotaObrera + cuotaPatronal).toFixed(2))
+    total: parseFloat((cuotaObrera + cuotaPatronal).toFixed(2)),
+    tasaPatronal: parseFloat((renglon.tasa * 100).toFixed(3)),
+    rangoPatronal: renglon.descripcion
   };
 }
 
@@ -243,14 +277,14 @@ export function calcularCuotasIMSS(salarioDiario, opciones = {}) {
     throw new Error('El salario diario debe ser un número positivo');
   }
   
-  const { claseRiesgo = 1, diasPeriodo = 30 } = opciones;
+  const { claseRiesgo = 1, diasPeriodo = 30, zonaFronteriza = false } = opciones;
   
   if (claseRiesgo < 1 || claseRiesgo > 5) {
     throw new Error('La clase de riesgo debe estar entre 1 y 5');
   }
   
   // Calcular salario base de cotización
-  const salarioBase = calcularSalarioBase(salarioDiario);
+  const salarioBase = calcularSalarioBase(salarioDiario, zonaFronteriza);
   
   // Calcular cada ramo
   const enfermedadMat = calcularEnfermedadMaternidad(salarioBase);
@@ -383,15 +417,16 @@ export function calcularSalarioNeto(salarioDiario, opciones = {}) {
 }
 
 /**
- * Obtiene información de UMA 2024
+ * Obtiene información de UMA 2026
  * @returns {Object} Valores de UMA
  */
 export function obtenerUMA() {
   return {
-    año: 2024,
-    ...UMA_2024,
+    año: 2026,
+    ...UMA_2026,
     limitesSalario: {
-      minimo: SALARIO_MINIMO_2024,
+      minimo: SALARIO_MINIMO_2026.general,
+      minimoZonaFronteriza: SALARIO_MINIMO_2026.zonaLibreFronteraNorte,
       maximoCotizacion: LIMITE_SUPERIOR_COTIZACION
     }
   };
@@ -403,8 +438,9 @@ export function obtenerUMA() {
  */
 export function obtenerPorcentajesIMSS() {
   return {
-    año: 2024,
-    ...PORCENTAJES_IMSS
+    año: 2026,
+    ...PORCENTAJES_IMSS,
+    cesantiaVejezPatronal: CESANTIA_VEJEZ_PATRONAL_2026
   };
 }
 
