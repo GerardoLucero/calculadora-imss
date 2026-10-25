@@ -2,12 +2,10 @@
 
 Librería moderna para calcular cuotas obrero-patronales del IMSS (Instituto Mexicano del Seguro Social) con tarifas actualizadas 2024, siguiendo la Ley del Seguro Social.
 
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-FF5E5B?style=flat&logo=ko-fi&logoColor=white)](https://ko-fi.com/gerardolucero)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/lucerorios0)
-[![GitHub Stars](https://img.shields.io/github/stars/GerardoLucero/calculadora-imss?style=social)](https://github.com/GerardoLucero/calculadora-imss)
 [![npm version](https://badge.fury.io/js/calculadora-imss.svg)](https://badge.fury.io/js/calculadora-imss)
 [![npm downloads](https://img.shields.io/npm/dm/calculadora-imss.svg)](https://www.npmjs.com/package/calculadora-imss)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/GerardoLucero/calculadora-imss/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/GerardoLucero/calculadora-imss/actions/workflows/ci-cd.yml)
 
 ## Features
 
@@ -147,6 +145,13 @@ const resultados = calcularCuotasMultiples(trabajadores);
 - [Ley del Seguro Social](http://www.imss.gob.mx/conoce-al-imss/ley-del-seguro-social)
 - [UMA 2024 — INEGI](https://www.inegi.org.mx/temas/uma/)
 
+## Apoyo
+
+Proyecto de código abierto mantenido en mi tiempo libre. Si te fue útil y quieres agradecerlo:
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-FF5E5B?style=flat&logo=ko-fi&logoColor=white)](https://ko-fi.com/gerardolucero)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/lucerorios0)
+
 ## Licencia
 
-MIT © [Gerardo Lucero](https://github.com/GerardoLucero)
+MIT © [Gerardo Lucero](https://github.com/GerardoLucero), ver [LICENSE](LICENSE).
