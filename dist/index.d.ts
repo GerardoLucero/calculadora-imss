@@ -27,7 +27,7 @@ export function calcularCuotaPatronal(salarioDiario: number, opciones?: any): an
  */
 export function calcularSalarioNeto(salarioDiario: number, opciones?: any): any;
 /**
- * Obtiene información de UMA 2024
+ * Obtiene información de UMA 2026
  * @returns {Object} Valores de UMA
  */
 export function obtenerUMA(): any;

@@ -1,6 +1,6 @@
 # calculadora-imss
 
-Librería moderna para calcular cuotas obrero-patronales del IMSS (Instituto Mexicano del Seguro Social) con tarifas actualizadas 2024, siguiendo la Ley del Seguro Social.
+Librería moderna para calcular cuotas obrero-patronales del IMSS (Instituto Mexicano del Seguro Social) con UMA, salarios mínimos y cuotas de 2026, siguiendo la Ley del Seguro Social.
 
 [![npm version](https://badge.fury.io/js/calculadora-imss.svg)](https://badge.fury.io/js/calculadora-imss)
 [![npm downloads](https://img.shields.io/npm/dm/calculadora-imss.svg)](https://www.npmjs.com/package/calculadora-imss)
@@ -9,7 +9,7 @@ Librería moderna para calcular cuotas obrero-patronales del IMSS (Instituto Mex
 
 ## Features
 
-- **Tarifas IMSS 2024** — UMA y porcentajes actualizados
+- **Datos 2026** — UMA, salario mínimo y cuota patronal de cesantía y vejez por rango (reforma de pensiones)
 - **6 ramos completos** — Enfermedad, Invalidez, Retiro, Cesantía, Guarderías, Riesgos
 - **Cuotas obrera y patronal** — cálculo separado y total
 - **5 clases de riesgo** — desde mínima hasta máxima
@@ -42,15 +42,15 @@ console.log(cuotas);
   diasPeriodo: 30,
   claseRiesgo: 1,
   desglosePorRamo: [
-    { ramo: 'Enfermedad y Maternidad', obrera: 2.57, patronal: 68.32, total: 70.89 },
+    { ramo: 'Enfermedad y Maternidad', obrera: 3.72, patronal: 34.31, total: 38.03 },
     { ramo: 'Invalidez y Vida', obrera: 3.13, patronal: 8.75, total: 11.88 },
     { ramo: 'Retiro', obrera: 0, patronal: 10.00, total: 10.00 },
-    { ramo: 'Cesantía y Vejez', obrera: 5.63, patronal: 15.75, total: 21.38 },
-    { ramo: 'Guarderías', obrera: 0, patronal: 5.00, total: 5.00 },
+    { ramo: 'Cesantía en Edad Avanzada y Vejez', obrera: 5.63, patronal: 37.56, total: 43.19, tasaPatronal: 7.513 },
+    { ramo: 'Guarderías y Prestaciones Sociales', obrera: 0, patronal: 5.00, total: 5.00 },
     { ramo: 'Riesgos de Trabajo', obrera: 0, patronal: 2.72, total: 2.72 }
   ],
-  totalesPeriodo: { obrera: 339.90, patronal: 3316.20, total: 3656.10 },
-  salarioNeto: { diario: 488.67, periodo: 14660.10 }
+  totalesPeriodo: { obrera: 374.40, patronal: 2950.20, total: 3324.60 },
+  salarioNeto: { diario: 487.52, periodo: 14625.60 }
 }
 */
 ```
@@ -100,8 +100,8 @@ const resultados = calcularCuotasMultiples(trabajadores);
 | `calcularCuotaPatronal(salarioDiario, opciones)` | Calcula solo la cuota del patrón |
 | `calcularSalarioNeto(salarioDiario, opciones)` | Calcula el salario neto después de descuentos |
 | `calcularCuotasMultiples(trabajadores)` | Calcula cuotas para múltiples trabajadores |
-| `obtenerUMA()` | Retorna los valores de UMA 2024 |
-| `obtenerPorcentajesIMSS()` | Retorna las tablas de porcentajes IMSS 2024 |
+| `obtenerUMA()` | Retorna los valores de UMA y salario mínimo 2026 |
+| `obtenerPorcentajesIMSS()` | Retorna las tablas de porcentajes IMSS 2026 |
 
 **Opciones comunes:**
 - `claseRiesgo` (number, 1-5): clase de riesgo de trabajo. Default: 1
@@ -111,12 +111,32 @@ const resultados = calcularCuotasMultiples(trabajadores);
 
 | Ramo | Obrera | Patronal |
 |------|--------|----------|
-| Enfermedad y Maternidad | 0.40% + 0.375% | 20.40% sobre 3 UMAs + 1.10% excedente |
+| Enfermedad y Maternidad, cuota fija | — | 20.40% de **una** UMA diaria por trabajador |
+| Enfermedad y Maternidad, excedente de 3 UMA | 0.40% | 1.10% |
+| Prestaciones en dinero | 0.25% | 0.70% |
+| Gastos médicos de pensionados | 0.375% | 1.05% |
 | Invalidez y Vida | 0.625% | 1.75% |
 | Retiro | — | 2.00% |
-| Cesantía y Vejez | 1.125% | 3.150% |
+| Cesantía y Vejez | 1.125% | Según rango de salario (ver abajo) |
 | Guarderías | — | 1.00% |
 | Riesgos de Trabajo | — | Variable por clase |
+
+### Cesantía y vejez patronal en 2026
+
+La reforma de pensiones (DOF 16-12-2020) sube cada año la cuota patronal hasta 2030. Para 2026:
+
+| Salario base de cotización | Cuota patronal |
+|---|---|
+| 1.00 SM | 3.150% |
+| 1.01 SM a 1.50 UMA | 3.676% |
+| 1.51 a 2.00 UMA | 4.851% |
+| 2.01 a 2.50 UMA | 5.556% |
+| 2.51 a 3.00 UMA | 6.026% |
+| 3.01 a 3.50 UMA | 6.361% |
+| 3.51 a 4.00 UMA | 6.613% |
+| 4.01 UMA en adelante | 7.513% |
+
+Con el salario mínimo de 2026 ($315.04, más de 2.6 UMA), un SBC igual al mínimo paga 3.150% y uno apenas superior cae en el rango de su múltiplo de UMA.
 
 ## Clases de riesgo
 
@@ -128,22 +148,23 @@ const resultados = calcularCuotasMultiples(trabajadores);
 | IV | Alta | Química, transporte de carga |
 | V | Máxima | Minería, explosivos, trabajos subterráneos |
 
-## Valores de referencia 2024
+## Valores de referencia 2026
 
-- **UMA Diaria**: $108.57
-- **UMA Mensual**: $3,297.57
-- **Salario Mínimo**: $248.93 (diario)
-- **Tope de Cotización**: $2,714.25 (25 UMAs diarias)
+- **UMA Diaria**: $117.31 (vigente desde el 1 de febrero de 2026; enero usa la UMA 2025)
+- **UMA Mensual**: $3,566.22
+- **Salario Mínimo**: $315.04 diario (zona libre de la frontera norte: $440.87, opción `zonaFronteriza: true`)
+- **Tope de Cotización**: $2,932.75 (25 UMAs diarias)
 
 ## Notas importantes
 
-- Cálculos basados en la Ley del Seguro Social vigente en 2024
-- No incluye INFONAVIT (5%) ni impuestos locales sobre nómina
+- Cálculos basados en la Ley del Seguro Social y en los valores vigentes en 2026. Es una ayuda de cálculo: las primas de riesgo de trabajo reales dependen de la siniestralidad de cada patrón.
+- No incluye INFONAVIT (5%) ni impuestos locales sobre nómina.
+- La tabla de cesantía y vejez 2026 sigue la gradualidad del Segundo transitorio del decreto; el valor final de 2030 (tabla del art. 168) está en el DOF.
 
 ## Referencias
 
 - [Ley del Seguro Social](http://www.imss.gob.mx/conoce-al-imss/ley-del-seguro-social)
-- [UMA 2024 — INEGI](https://www.inegi.org.mx/temas/uma/)
+- [UMA — INEGI](https://www.inegi.org.mx/temas/uma/)
 
 ## Apoyo
 
